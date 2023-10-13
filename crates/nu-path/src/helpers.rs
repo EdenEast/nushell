@@ -6,6 +6,19 @@ pub fn home_dir() -> Option<PathBuf> {
     dirs_next::home_dir()
 }
 
+#[cfg(target_os = "macos")]
+pub fn config_dir() -> Option<PathBuf> {
+    // dirs_next::config_dir returns the path `/Users/<user>/Library/Application Support` on macos.
+    // If the user has defined `XDG_CONFIG_HOME` on macos then they expect nushell to act like
+    // other *nix systems. This could be defined in a plist file under `$HOME/Library/LaunchAgents`
+    // or from the root shell if launched from another shell.
+    std::env::var("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .ok()
+        .or(dirs_next::config_dir())
+}
+
+#[cfg(not(target_os = "macos"))]
 pub fn config_dir() -> Option<PathBuf> {
     dirs_next::config_dir()
 }
